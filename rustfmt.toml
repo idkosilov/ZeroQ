@@ -1,0 +1,8 @@
+max_width = 80
+tab_spaces = 4
+newline_style = "Unix"
+use_small_heuristics = "Max"
+fn_params_layout = "Vertical"
+chain_width = 60
+match_block_trailing_comma = true
+array_width = 60
