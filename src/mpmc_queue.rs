@@ -62,8 +62,8 @@ pub struct MpmcQueueOnBuffer<'a> {
     _marker: PhantomData<&'a mut [MaybeUninit<u8>]>,
 }
 
-unsafe impl<'a> Send for MpmcQueueOnBuffer<'a> {}
-unsafe impl<'a> Sync for MpmcQueueOnBuffer<'a> {}
+unsafe impl Send for MpmcQueueOnBuffer<'_> {}
+unsafe impl Sync for MpmcQueueOnBuffer<'_> {}
 
 impl<'a> MpmcQueueOnBuffer<'a> {
     /// Validates buffer layout and ensures it meets required conditions.
