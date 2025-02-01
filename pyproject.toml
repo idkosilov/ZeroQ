@@ -14,3 +14,8 @@ build-backend = "maturin"
 
 [tool.maturin]
 features = ["pyo3/extension-module"]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.9.4",
+]

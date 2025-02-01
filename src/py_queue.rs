@@ -236,6 +236,29 @@ impl Queue {
         self.check_active()?;
         Ok(self.queue.header().buffer_mask + 1)
     }
+
+    /// Returns the number of elements in the queue.
+    fn __len__(&self) -> PyResult<usize> {
+        self.check_active()?;
+        let head = self.queue.header().dequeue_pos.load(Ordering::Acquire);
+        let tail = self.queue.header().enqueue_pos.load(Ordering::Acquire);
+        Ok(tail.saturating_sub(head))
+    }
+
+    /// Returns whether the queue is not empty.
+    fn __bool__(&self) -> PyResult<bool> {
+        Ok(self.__len__()? > 0)
+    }
+
+    /// Returns whether the queue is full.
+    fn full(&self) -> PyResult<bool> {
+        Ok(self.__len__()? >= self.queue.header().buffer_mask + 1)
+    }
+
+    /// Returns whether the queue is empty.
+    fn empty(&self) -> PyResult<bool> {
+        Ok(self.__len__()? == 0)
+    }
 }
 
 impl Drop for Queue {
