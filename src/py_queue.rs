@@ -252,7 +252,7 @@ impl Queue {
 
     /// Returns whether the queue is full.
     fn full(&self) -> PyResult<bool> {
-        Ok(self.__len__()? >= self.queue.header().buffer_mask + 1)
+        Ok(self.__len__()? >= (self.queue.header().buffer_mask + 1))
     }
 
     /// Returns whether the queue is empty.
