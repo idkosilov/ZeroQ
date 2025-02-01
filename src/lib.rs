@@ -1,3 +1,4 @@
+use named_lock::{NamedLock, NamedLockGuard};
 use pyo3::exceptions;
 use pyo3::exceptions::PyBlockingIOError;
 use pyo3::prelude::*;
@@ -32,6 +33,7 @@ struct Queue {
     buffer: *mut u8,
     sequences: *mut AtomicUsize,
     closed: Arc<AtomicBool>,
+    lock: NamedLock,
 }
 
 unsafe impl Sync for Queue {}
@@ -112,6 +114,20 @@ impl Queue {
 
         Ok((total_size, header_size, buffer_size, sequences_size, seq_align))
     }
+
+    fn with_lock<F, T>(
+        &self,
+        f: F,
+    ) -> PyResult<T>
+    where
+        F: FnOnce(&NamedLockGuard) -> PyResult<T>,
+    {
+        let guard = self.lock.lock().map_err(|e| {
+            exceptions::PyRuntimeError::new_err(format!("Lock error: {}", e))
+        })?;
+
+        f(&guard)
+    }
 }
 
 #[pymethods]
@@ -124,6 +140,22 @@ impl Queue {
         capacity: Option<usize>,
         create: bool,
     ) -> PyResult<Self> {
+        let lock = NamedLock::create(&format!("{}-queue-lock", name)).map_err(
+            |e| {
+                exceptions::PyRuntimeError::new_err(format!(
+                    "Failed to create lock: {}",
+                    e
+                ))
+            },
+        )?;
+
+        let _guard = lock.lock().map_err(|e| {
+            exceptions::PyRuntimeError::new_err(format!(
+                "Failed to acquire lock: {}",
+                e
+            ))
+        })?;
+
         let shared_mem = if create {
             let element_size = element_size.ok_or_else(|| {
                 exceptions::PyValueError::new_err(
@@ -248,6 +280,7 @@ impl Queue {
             buffer: buffer_ptr,
             sequences: sequences_ptr,
             closed: Arc::new(AtomicBool::new(false)),
+            lock,
         })
     }
 
@@ -255,97 +288,106 @@ impl Queue {
         &self,
         data: &[u8],
     ) -> PyResult<bool> {
-        self.check_active()?;
-        Python::with_gil(|py| {
-            py.allow_threads(|| {
-                let element_size = self.get_element_size();
-                if data.len() != element_size {
-                    return Err(exceptions::PyValueError::new_err(format!(
-                        "Data size {} does not match element size {}",
-                        data.len(),
-                        element_size
-                    )));
-                }
-
-                loop {
-                    let pos = self.enqueue_pos().load(Ordering::Acquire);
-                    let index = pos & self.mask();
-                    let seq = self.sequence_at(index).load(Ordering::Acquire);
-
-                    match seq as isize - pos as isize {
-                        0 => {
-                            if self
-                                .enqueue_pos()
-                                .compare_exchange_weak(
-                                    pos,
-                                    pos + 1,
-                                    Ordering::Acquire,
-                                    Ordering::Relaxed,
-                                )
-                                .is_ok()
-                            {
-                                let offset = index * element_size;
-                                unsafe {
-                                    let dest = std::slice::from_raw_parts_mut(
-                                        self.buffer.add(offset),
-                                        element_size,
-                                    );
-                                    dest.copy_from_slice(data);
-                                }
-
-                                self.sequence_at(index)
-                                    .store(pos + 1, Ordering::Release);
-                                return Ok(true);
-                            }
-                        },
-                        diff if diff < 0 => return Ok(false),
-                        _ => continue,
+        self.with_lock(|_guard| {
+            self.check_active()?;
+            Python::with_gil(|py| {
+                py.allow_threads(|| {
+                    let element_size = self.get_element_size();
+                    if data.len() != element_size {
+                        return Err(exceptions::PyValueError::new_err(
+                            format!(
+                                "Data size {} does not match element size {}",
+                                data.len(),
+                                element_size
+                            ),
+                        ));
                     }
-                }
+
+                    loop {
+                        let pos = self.enqueue_pos().load(Ordering::Acquire);
+                        let index = pos & self.mask();
+                        let seq =
+                            self.sequence_at(index).load(Ordering::Acquire);
+
+                        match seq as isize - pos as isize {
+                            0 => {
+                                if self
+                                    .enqueue_pos()
+                                    .compare_exchange_weak(
+                                        pos,
+                                        pos + 1,
+                                        Ordering::AcqRel,
+                                        Ordering::Relaxed,
+                                    )
+                                    .is_ok()
+                                {
+                                    let offset = index * element_size;
+                                    unsafe {
+                                        let dest =
+                                            std::slice::from_raw_parts_mut(
+                                                self.buffer.add(offset),
+                                                element_size,
+                                            );
+                                        dest.copy_from_slice(data);
+                                    }
+
+                                    self.sequence_at(index)
+                                        .store(pos + 1, Ordering::Release);
+                                    return Ok(true);
+                                }
+                            },
+                            diff if diff < 0 => return Ok(false),
+                            _ => continue,
+                        }
+                    }
+                })
             })
         })
     }
 
     fn try_get(&self) -> PyResult<Option<Vec<u8>>> {
-        self.check_active()?;
-        Python::with_gil(|py| {
-            py.allow_threads(|| loop {
-                let pos = self.dequeue_pos().load(Ordering::Acquire);
-                let index = pos & self.mask();
-                let seq = self.sequence_at(index).load(Ordering::Acquire);
+        self.with_lock(|_guard| {
+            self.check_active()?;
+            Python::with_gil(|py| {
+                py.allow_threads(|| loop {
+                    let pos = self.dequeue_pos().load(Ordering::Acquire);
+                    let index = pos & self.mask();
+                    let seq = self.sequence_at(index).load(Ordering::Acquire);
 
-                match seq as isize - (pos + 1) as isize {
-                    0 => {
-                        if self
-                            .dequeue_pos()
-                            .compare_exchange_weak(
-                                pos,
-                                pos + 1,
-                                Ordering::AcqRel,
-                                Ordering::Relaxed,
-                            )
-                            .is_ok()
-                        {
-                            let offset = index * self.get_element_size();
-                            let mut result = vec![0u8; self.get_element_size()];
-                            unsafe {
-                                let src = std::slice::from_raw_parts(
-                                    self.buffer.add(offset),
-                                    self.get_element_size(),
+                    match seq as isize - (pos + 1) as isize {
+                        0 => {
+                            if self
+                                .dequeue_pos()
+                                .compare_exchange_weak(
+                                    pos,
+                                    pos + 1,
+                                    Ordering::AcqRel,
+                                    Ordering::Relaxed,
+                                )
+                                .is_ok()
+                            {
+                                let offset = index * self.get_element_size();
+                                let mut result =
+                                    vec![0u8; self.get_element_size()];
+                                unsafe {
+                                    let src = std::slice::from_raw_parts(
+                                        self.buffer.add(offset),
+                                        self.get_element_size(),
+                                    );
+                                    result.copy_from_slice(src);
+                                }
+
+                                self.sequence_at(index).store(
+                                    pos + self.capacity(),
+                                    Ordering::Release,
                                 );
-                                result.copy_from_slice(src);
+                                return Ok(Some(result));
                             }
-
-                            self.sequence_at(index).store(
-                                pos + self.capacity(),
-                                Ordering::Release,
-                            );
-                            return Ok(Some(result));
-                        }
-                    },
-                    diff if diff < 0 => return Ok(None),
-                    _ => continue,
-                }
+                        },
+                        diff if diff < 0 => return Ok(None),
+                        _ => continue,
+                    }
+                })
             })
         })
     }

@@ -12,4 +12,4 @@ crate-type = ["cdylib"]
 pyo3 = "0.23.3"
 crossbeam-queue = "0.3"
 shared_memory = "0.12.4"
-log = "0.4.25"
+named-lock = "0.4.1"
