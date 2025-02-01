@@ -1,10 +1,11 @@
 [project]
 name = "fastqueue"
 version = "0.1.0"
-description = "Shared memory queue implementation in rust."
 readme = "README.md"
 requires-python = ">=3.9"
-dependencies = []
+dependencies = [
+    "maturin>=1.8,<2.0",
+]
 
 [build-system]
 requires = ["maturin>=1.8,<2.0"]
@@ -12,7 +13,10 @@ build-backend = "maturin"
 
 [dependency-groups]
 dev = [
+    "hypothesis>=6.124.9",
     "mypy>=1.14.1",
+    "pytest-randomly>=3.16.0",
+    "pytest-timeout>=2.3.1",
     "pytest>=8.3.4",
     "ruff>=0.9.4",
 ]
@@ -73,9 +77,71 @@ select = [
 ]
 ignore = [
   "COM812", # trailing comma, conflicts with `ruff format`
+  "D100",   # missing docstring in public module
   "D104",   # missing docstring in public package
 ]
 
 flake8-quotes.inline-quotes = "single"
 mccabe.max-complexity = 6
 pydocstyle.convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*.py" = ["S101", "PLR2004", "F841"]
+
+
+[tool.pytest]
+# pytest configuration:
+# https://docs.pytest.org/en/stable/customize.html
+
+# Timeout for tests, so they can not take longer
+# than this amount of seconds.
+# You should adjust this value to be as low as possible.
+# Configuration:
+# https://pypi.org/project/pytest-timeout/
+timeout = 5
+
+# Strict `@xfail` by default:
+xfail_strict = true
+
+# Directories that are not visited by pytest collector:
+norecursedirs = [
+  "*.egg", ".eggs", "dist", "build", "docs", ".tox", ".git", "__pycache__"
+]
+
+# You will need to measure your tests speed with `-n auto` and without it,
+# so you can see whether it gives you any performance gain, or just gives
+# you an overhead. See `docs/template/development-process.rst`.
+addopts = [
+  "--strict-markers",
+  "--strict-config",
+  "--doctest-modules",
+  "--fail-on-template-vars",
+  # Output:
+  "--tb=short",
+]
+
+filterwarnings = [
+  "error"
+]
+
+[mypy]
+# Mypy configuration:
+# https://mypy.readthedocs.io/en/latest/config_file.html
+enable_error_code = [
+  "truthy-bool",
+  "truthy-iterable",
+  "redundant-expr",
+  "unused-awaitable",
+  "ignore-without-code",
+  "possibly-undefined",
+  "redundant-self",
+  "explicit-override",
+  "mutable-override",
+  "unimported-reveal",
+]
+
+explicit_package_bases = true
+ignore_missing_imports = true
+local_partial_types = true
+strict = true
+warn_unreachable = true

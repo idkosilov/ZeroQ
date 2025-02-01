@@ -4,6 +4,7 @@ use crate::shmem_wrapper::ShmemWrapper;
 use pyo3::exceptions::{PyOSError, PyValueError};
 use pyo3::prelude::*;
 use shared_memory::ShmemConf;
+use std::borrow::Cow;
 use std::mem::MaybeUninit;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
@@ -121,13 +122,13 @@ impl Queue {
     /// # Errors
     /// Raises `QueueFull` if the queue remains full beyond the timeout.
     #[pyo3(signature = (item, timeout=None))]
-    fn put(&self, item: &[u8], timeout: Option<f64>) -> PyResult<()> {
+    fn put(&self, item: Cow<[u8]>, timeout: Option<f64>) -> PyResult<()> {
         self.check_active()?;
         let start = Instant::now();
 
         Python::with_gil(|py| {
             py.allow_threads(|| loop {
-                match self.queue.enqueue(item) {
+                match self.queue.enqueue(item.as_ref()) {
                     Ok(_) => return Ok(()),
                     Err(crate::mpmc_queue::MpmcQueueError::QueueFull) => {
                         if let Some(t) = timeout {
@@ -152,9 +153,9 @@ impl Queue {
     ///
     /// # Errors
     /// Raises `QueueFull` if the queue is full.
-    fn put_nowait(&self, item: &[u8]) -> PyResult<()> {
+    fn put_nowait(&self, item: Cow<[u8]>) -> PyResult<()> {
         self.check_active()?;
-        Python::with_gil(|py| py.allow_threads(|| self.queue.enqueue(item)))?;
+        Python::with_gil(|py| py.allow_threads(|| self.queue.enqueue(item.as_ref())))?;
         Ok(())
     }
 

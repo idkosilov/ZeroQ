@@ -1,11 +1,7 @@
-from .fastqueue import (
-    Queue,
-    Empty,
-    Full,
-)
+from .fastqueue import Empty, Full, Queue
 
 __all__ = [
-    'Queue',
     'Empty',
     'Full',
+    'Queue',
 ]

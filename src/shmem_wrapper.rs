@@ -27,11 +27,3 @@ impl ShmemWrapper {
         self.shmem.len()
     }
 }
-
-impl Drop for ShmemWrapper {
-    /// Ensures that the process does not delete the shared memory region upon exit.
-    /// This prevents unintended removal when multiple processes are using it.
-    fn drop(&mut self) {
-        self.shmem.set_owner(false);
-    }
-}

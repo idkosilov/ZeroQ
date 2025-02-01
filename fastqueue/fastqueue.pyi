@@ -1,7 +1,7 @@
-class Empty(Exception):
+class Empty(Exception):  # noqa: N818
     """Raised when the queue is empty."""
 
-class Full(Exception):
+class Full(Exception):  # noqa: N818
     """Raised when the queue is full."""
 
 class Queue:
@@ -25,7 +25,9 @@ class Queue:
         :raises OSError: If shared memory creation/opening fails.
         """
 
-    def put(self, item: bytes, timeout: float | None = None) -> None:
+    def put(
+        self, item: bytes | bytearray, timeout: float | None = None
+    ) -> None:
         """Blocking enqueue operation.
 
         Blocks until space is available or the timeout expires.
@@ -36,7 +38,7 @@ class Queue:
         :raises FullError: If queue remains full beyond timeout.
         """
 
-    def put_nowait(self, item: bytes) -> None:
+    def put_nowait(self, item: bytes | bytearray) -> None:
         """Non-blocking enqueue operation.
 
         :param item: Item to enqueue.
@@ -77,3 +79,9 @@ class Queue:
 
     def empty(self) -> bool:
         """Returns True if the queue is empty."""
+
+    def __len__(self) -> int:
+        """Returns the number of elements in the queue."""
+
+    def __bool__(self) -> bool:
+        """Returns True if the queue is not empty."""
