@@ -4,8 +4,8 @@ mod py_queue;
 mod shmem_wrapper;
 
 use crate::errors::{
-    FailedCreateSharedMemory, FailedOpenSharedMemory, InvalidParameters,
-    QueueClosed, QueueEmpty, QueueFull,
+    FailedCreateSharedMemory, FailedOpenSharedMemory, InvalidParameters, QueueClosed, QueueEmpty,
+    QueueFull,
 };
 use pyo3::prelude::*;
 

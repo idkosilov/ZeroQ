@@ -19,7 +19,30 @@ permissions:
   contents: read
 
 jobs:
+  rust-checks:
+    name: Rust Formatting, Linting, and Compilation Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Run cargo fmt (Rust formatting)
+        run: cargo fmt --check
+
+      - name: Run cargo clippy (Linting)
+        run: cargo clippy -- -D warnings
+
+      - name: Run cargo check (Compilation check)
+        run: cargo check
+
   linux:
+    needs: rust-checks
     runs-on: ${{ matrix.platform.runner }}
     strategy:
       matrix:
@@ -55,6 +78,7 @@ jobs:
           path: dist
 
   musllinux:
+    needs: rust-checks
     runs-on: ${{ matrix.platform.runner }}
     strategy:
       matrix:
@@ -86,6 +110,7 @@ jobs:
           path: dist
 
   windows:
+    needs: rust-checks
     runs-on: ${{ matrix.platform.runner }}
     strategy:
       matrix:
@@ -113,6 +138,7 @@ jobs:
           path: dist
 
   macos:
+    needs: rust-checks
     runs-on: ${{ matrix.platform.runner }}
     strategy:
       matrix:
@@ -139,6 +165,7 @@ jobs:
           path: dist
 
   sdist:
+    needs: rust-checks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
