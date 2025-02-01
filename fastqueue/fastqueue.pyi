@@ -1,26 +1,8 @@
-class InvalidParameters(Exception):
-    """Raised when invalid parameters are passed to the constructor."""
-
-
-class QueueEmpty(Exception):
+class Empty(Exception):
     """Raised when the queue is empty."""
 
-
-class QueueFull(Exception):
+class Full(Exception):
     """Raised when the queue is full."""
-
-
-class QueueClosed(Exception):
-    """Raised when the queue is closed."""
-
-
-class FailedCreateSharedMemory(Exception):
-    """Raised when shared memory creation fails."""
-
-
-class FailedOpenSharedMemory(Exception):
-    """Raised when opening an existing shared memory fails."""
-
 
 class Queue:
     """A shared-memory MPMC queue."""
@@ -30,74 +12,68 @@ class Queue:
         name: str,
         element_size: int | None = None,
         capacity: int | None = None,
-        create: bool = True
+        create: bool = True,
     ) -> None:
-        """
-        Creates a new shared-memory queue or attaches to an existing one.
+        """Creates or attaches to a shared-memory queue.
 
-        :param name: Identifier for the shared memory segment.
-        :param element_size: Size of each element in bytes (required if creating).
-        :param capacity: Number of slots (must be a power of two; required if creating).
+        :param name: Shared memory segment name.
+        :param element_size: Element size in bytes (required if creating).
+        :param capacity: Number of slots (power of two, required if creating).
         :param create: Whether to create a new queue (default=True).
-        :raises InvalidParameters: If element_size or capacity is missing when creating.
-        :raises FailedCreateSharedMemory: If shared memory creation fails.
-        :raises FailedOpenSharedMemory: If opening an existing shared memory fails.
+
+        :raises ValueError: If element_size/capacity is missing when creating.
+        :raises OSError: If shared memory creation/opening fails.
         """
 
     def put(self, item: bytes, timeout: float | None = None) -> None:
-        """
-        Blocking put operation. Attempts to enqueue `item` into the queue.
-        If the queue is full, it blocks until space becomes available or the timeout expires.
+        """Blocking enqueue operation.
 
-        :param item: The item to enqueue.
-        :param timeout: Maximum time to wait (seconds), or None for indefinite wait.
-        :raises QueueFull: If the queue remains full beyond the timeout.
+        Blocks until space is available or the timeout expires.
+
+        :param item: Item to enqueue.
+        :param timeout: Max wait time (seconds), None for indefinite.
+
+        :raises FullError: If queue remains full beyond timeout.
         """
 
     def put_nowait(self, item: bytes) -> None:
-        """
-        Non-blocking put operation. Attempts to enqueue `item` into the queue immediately.
+        """Non-blocking enqueue operation.
 
-        :param item: The item to enqueue.
-        :raises QueueFull: If the queue is full.
+        :param item: Item to enqueue.
+
+        :raises FullError: If the queue is full.
         """
 
     def get(self, timeout: float | None = None) -> bytes:
-        """
-        Blocking get operation. Attempts to dequeue an item from the queue.
-        If the queue is empty, it blocks until an item becomes available or the timeout expires.
+        """Blocking dequeue operation.
 
-        :param timeout: Maximum time to wait (seconds), or None for indefinite wait.
+        Blocks until an item is available or timeout expires.
+
+        :param timeout: Max wait time (seconds), None for indefinite.
+
         :return: The dequeued item as bytes.
-        :raises QueueEmpty: If the queue is empty beyond the timeout.
+
+        :raises Empty: If queue remains empty beyond timeout.
         """
 
     def get_nowait(self) -> bytes:
-        """
-        Non-blocking get operation. Attempts to dequeue an item from the queue immediately.
+        """Non-blocking dequeue operation.
 
         :return: The dequeued item as bytes.
-        :raises QueueEmpty: If the queue is empty.
+
+        :raises Empty: If the queue is empty.
         """
 
     @property
     def element_size(self) -> int:
-        """
-        Returns the size of a single element in bytes.
-        """
+        """Size of a single element in bytes."""
 
     @property
     def maxsize(self) -> int:
-        """
-        Returns the maximum number of elements the queue can hold.
-        """
+        """Maximum number of elements the queue can hold."""
 
     def full(self) -> bool:
-        """
-        Returns True if the queue is full.
-        """
+        """Returns True if the queue is full."""
 
     def empty(self) -> bool:
-        """
-        Returns True if the queue is empty.
-        """
+        """Returns True if the queue is empty."""

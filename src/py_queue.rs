@@ -1,9 +1,7 @@
-use crate::errors::{
-    FailedCreateSharedMemory, FailedOpenSharedMemory, InvalidParameters, QueueClosed, QueueEmpty,
-    QueueFull,
-};
+use crate::errors::{Empty, Full};
 use crate::mpmc_queue::MpmcQueueOnBuffer;
 use crate::shmem_wrapper::ShmemWrapper;
+use pyo3::exceptions::{PyOSError, PyValueError};
 use pyo3::prelude::*;
 use shared_memory::ShmemConf;
 use std::mem::MaybeUninit;
@@ -49,19 +47,15 @@ impl Queue {
         let (elem_size, cap) = if create {
             (
                 element_size.ok_or_else(|| {
-                    InvalidParameters::new_err("element_size required when create=true")
+                    PyValueError::new_err("element_size required when create=true")
                 })?,
-                capacity.ok_or_else(|| {
-                    InvalidParameters::new_err("capacity required when create=true")
-                })?,
+                capacity
+                    .ok_or_else(|| PyValueError::new_err("capacity required when create=true"))?,
             )
         } else {
             // Attach: read parameters from shared memory header.
             let shmem_temp = ShmemConf::new().os_id(&name).open().map_err(|e| {
-                FailedOpenSharedMemory::new_err(format!(
-                    "Failed to open shared memory '{}': {}",
-                    name, e
-                ))
+                PyOSError::new_err(format!("Failed to open shared memory '{}': {}", name, e))
             })?;
             let base_ptr = shmem_temp.as_ptr() as usize;
             let header_ptr = base_ptr as *const crate::mpmc_queue::MpmcQueueHeader;
@@ -78,17 +72,11 @@ impl Queue {
                 .size(required_size)
                 .create()
                 .map_err(|e| {
-                    FailedCreateSharedMemory::new_err(format!(
-                        "Failed to create shared memory '{}': {}",
-                        name, e
-                    ))
+                    PyOSError::new_err(format!("Failed to create shared memory '{}': {}", name, e))
                 })?
         } else {
             ShmemConf::new().os_id(&name).open().map_err(|e| {
-                FailedOpenSharedMemory::new_err(format!(
-                    "Failed to open shared memory '{}': {}",
-                    name, e
-                ))
+                PyOSError::new_err(format!("Failed to open shared memory '{}': {}", name, e))
             })?
         };
 
@@ -115,7 +103,7 @@ impl Queue {
     /// Raises `QueueClosed` if the queue has been marked closed.
     fn check_active(&self) -> PyResult<()> {
         if self.closed.load(Ordering::Relaxed) {
-            Err(QueueClosed::new_err("Queue is closed"))
+            Err(PyOSError::new_err("Queue is closed"))
         } else {
             Ok(())
         }
@@ -144,7 +132,7 @@ impl Queue {
                     Err(crate::mpmc_queue::MpmcQueueError::QueueFull) => {
                         if let Some(t) = timeout {
                             if start.elapsed().as_secs_f64() > t {
-                                return Err(QueueFull::new_err("Queue is full"));
+                                return Err(Full::new_err("Queue is full"));
                             }
                         }
                         std::thread::sleep(Duration::from_millis(1));
@@ -212,7 +200,7 @@ impl Queue {
                     Err(crate::mpmc_queue::MpmcQueueError::QueueEmpty) => {
                         if let Some(t) = timeout {
                             if start.elapsed().as_secs_f64() > t {
-                                return Err(QueueEmpty::new_err("Queue is empty"));
+                                return Err(Empty::new_err("Queue is empty"));
                             }
                         }
                         std::thread::sleep(Duration::from_millis(1));

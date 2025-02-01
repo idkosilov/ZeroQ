@@ -1,21 +1,81 @@
 [project]
 name = "fastqueue"
-requires-python = ">=3.8"
-classifiers = [
-    "Programming Language :: Rust",
-    "Programming Language :: Python :: Implementation :: CPython",
-    "Programming Language :: Python :: Implementation :: PyPy",
-]
-dynamic = ["version"]
+version = "0.1.0"
+description = "Shared memory queue implementation in rust."
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = []
 
 [build-system]
 requires = ["maturin>=1.8,<2.0"]
 build-backend = "maturin"
 
+[dependency-groups]
+dev = [
+    "mypy>=1.14.1",
+    "pytest>=8.3.4",
+    "ruff>=0.9.4",
+]
+
 [tool.maturin]
 features = ["pyo3/extension-module"]
 
-[dependency-groups]
-dev = [
-    "ruff>=0.9.4",
+[tool.ruff]
+# Ruff config: https://docs.astral.sh/ruff/settings
+preview = true
+fix = true
+target-version = "py39"
+line-length = 80
+
+[tool.ruff.format]
+quote-style = "single"
+
+[tool.ruff.lint]
+select = [
+  "A",    # flake8-builtins
+  "B",    # flake8-bugbear
+  "C4",   # flake8-comprehensions
+  "C90",  # maccabe
+  "COM",  # flake8-commas
+  "D",    # pydocstyle
+  "DTZ",  # flake8-datetimez
+  "E",    # pycodestyle
+  "ERA",  # flake8-eradicate
+  "EXE",  # flake8-executable
+  "F",    # pyflakes
+  "FBT",  # flake8-boolean-trap
+  "FLY",  # pyflint
+  "FURB", # refurb
+  "G",    # flake8-logging-format
+  "I",    # isort
+  "ICN",  # flake8-import-conventions
+  "ISC",  # flake8-implicit-str-concat
+  "LOG",  # flake8-logging
+  "N",    # pep8-naming
+  "PERF", # perflint
+  "PIE",  # flake8-pie
+  "PL",   # pylint
+  "PT",   # flake8-pytest-style
+  "PTH",  # flake8-use-pathlib
+  "Q",    # flake8-quotes
+  "RET",  # flake8-return
+  "RSE",  # flake8-raise
+  "RUF",  # ruff
+  "S",    # flake8-bandit
+  "SIM",  # flake8-simpify
+  "SLF",  # flake8-self
+  "SLOT", # flake8-slots
+  "T100", # flake8-debugger
+  "TRY",  # tryceratops
+  "UP",   # pyupgrade
+  "W",    # pycodestyle
+  "YTT",  # flake8-2020
 ]
+ignore = [
+  "COM812", # trailing comma, conflicts with `ruff format`
+  "D104",   # missing docstring in public package
+]
+
+flake8-quotes.inline-quotes = "single"
+mccabe.max-complexity = 6
+pydocstyle.convention = "google"
