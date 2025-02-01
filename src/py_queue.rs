@@ -1,6 +1,6 @@
 use crate::errors::{
     FailedCreateSharedMemory, FailedOpenSharedMemory, InvalidParameters,
-    QueueClosed,
+    QueueClosed, QueueEmpty, QueueFull,
 };
 use crate::mpmc_queue::MpmcQueueOnBuffer;
 use crate::shmem_wrapper::ShmemWrapper;
@@ -9,6 +9,7 @@ use shared_memory::ShmemConf;
 use std::mem::MaybeUninit;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::time::{Duration, Instant};
 
 #[pyclass]
 pub struct Queue {
@@ -107,6 +108,35 @@ impl Queue {
         }
     }
 
+    #[pyo3(signature = (item, timeout=None))]
+    fn put(
+        &self,
+        item: &[u8],
+        timeout: Option<f64>,
+    ) -> PyResult<()> {
+        self.check_active()?;
+        let start = Instant::now();
+
+        Python::with_gil(|py| {
+            py.allow_threads(|| loop {
+                match self.queue.enqueue(item) {
+                    Ok(_) => return Ok(()),
+                    Err(crate::mpmc_queue::MpmcQueueError::QueueFull) => {
+                        if let Some(t) = timeout {
+                            if start.elapsed().as_secs_f64() > t {
+                                return Err(QueueFull::new_err(
+                                    "Queue is full",
+                                ));
+                            }
+                        }
+                        std::thread::sleep(Duration::from_millis(1));
+                    },
+                    Err(e) => return Err(e.into()),
+                }
+            })
+        })
+    }
+
     fn put_nowait(
         &self,
         item: &[u8],
@@ -123,6 +153,35 @@ impl Queue {
             py.allow_threads(|| self.queue.dequeue(&mut buf))
         })?;
         Ok(buf)
+    }
+
+    #[pyo3(signature = (timeout=None))]
+    fn get(
+        &self,
+        timeout: Option<f64>,
+    ) -> PyResult<Vec<u8>> {
+        self.check_active()?;
+        let start = Instant::now();
+        let mut buf = vec![0u8; self.queue.header().element_size];
+
+        Python::with_gil(|py| {
+            py.allow_threads(|| loop {
+                match self.queue.dequeue(&mut buf) {
+                    Ok(_) => return Ok(buf),
+                    Err(crate::mpmc_queue::MpmcQueueError::QueueEmpty) => {
+                        if let Some(t) = timeout {
+                            if start.elapsed().as_secs_f64() > t {
+                                return Err(QueueEmpty::new_err(
+                                    "Queue is empty",
+                                ));
+                            }
+                        }
+                        std::thread::sleep(Duration::from_millis(1));
+                    },
+                    Err(e) => return Err(e.into()),
+                }
+            })
+        })
     }
 
     #[getter]
