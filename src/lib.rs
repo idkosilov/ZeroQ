@@ -515,7 +515,7 @@ impl Drop for Queue {
 }
 
 #[pymodule]
-fn rpc_queue(m: &Bound<'_, PyModule>) -> PyResult<()> {
+fn fastqueue(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Queue>()?;
     Ok(())
 }

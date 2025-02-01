@@ -1,1 +1,1 @@
-# mcmc-queue
+# fastqueue
