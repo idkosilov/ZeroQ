@@ -1,48 +1,50 @@
 mod mpmc_queue;
+mod shmem_wrapper;
 
 use crate::mpmc_queue::MpmcQueueError;
 use pyo3::exceptions::{PyRuntimeError, PyValueError};
 use pyo3::prelude::*;
 use shared_memory::*;
+use shmem_wrapper::ShmemWrapper;
 use std::mem::MaybeUninit;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+
+pyo3::create_exception!(fastqueue, InvalidParameters, PyValueError);
+pyo3::create_exception!(fastqueue, QueueEmpty, PyRuntimeError);
+pyo3::create_exception!(fastqueue, QueueFull, PyRuntimeError);
 
 impl From<MpmcQueueError> for PyErr {
     fn from(error: MpmcQueueError) -> Self {
         match error {
             MpmcQueueError::InvalidSourceLength { expected, actual } => {
-                PyValueError::new_err(format!(
+                InvalidParameters::new_err(format!(
                     "Invalid source length: expected {}, got {}",
                     expected, actual
                 ))
             },
             MpmcQueueError::InvalidDestinationLength { expected, actual } => {
-                PyValueError::new_err(format!(
+                InvalidParameters::new_err(format!(
                     "Invalid destination length: expected {}, got {}",
                     expected, actual
                 ))
             },
-            MpmcQueueError::QueueFull => {
-                PyRuntimeError::new_err("Queue is full")
-            },
-            MpmcQueueError::QueueEmpty => {
-                PyRuntimeError::new_err("Queue is empty")
-            },
+            MpmcQueueError::QueueFull => QueueFull::new_err("Queue is full"),
+            MpmcQueueError::QueueEmpty => QueueEmpty::new_err("Queue is empty"),
             MpmcQueueError::BufferTooSmall { required, provided } => {
-                PyRuntimeError::new_err(format!(
+                InvalidParameters::new_err(format!(
                     "Buffer too small: required {}, provided {}",
                     required, provided
                 ))
             },
             MpmcQueueError::BufferMisaligned { expected, actual } => {
-                PyRuntimeError::new_err(format!(
+                InvalidParameters::new_err(format!(
                     "Buffer misaligned: expected {}, actual {}",
                     expected, actual
                 ))
             },
             MpmcQueueError::BufferSizeNotPowerOfTwo { actual } => {
-                PyRuntimeError::new_err(format!(
+                InvalidParameters::new_err(format!(
                     "Buffer size must be a power of two, got {}",
                     actual
                 ))
@@ -51,28 +53,10 @@ impl From<MpmcQueueError> for PyErr {
     }
 }
 
-/// A wrapper around Shmem to allow it to be sent between threads.
-///
-/// # Safety
-/// We use `unsafe impl` because shared_memory::Shmem is not automatically
-/// Send/Sync. This is safe provided that the shared memory is accessed only
-/// through atomics and proper synchronization.
-struct ShmemWrapper(Shmem);
-unsafe impl Send for ShmemWrapper {}
-unsafe impl Sync for ShmemWrapper {}
-
-impl ShmemWrapper {
-    fn _shmem(&self) -> &Shmem {
-        &self.0
-    }
-}
-
 /// The Queue class provides a Python interface to the MPMC queue in shared memory.
-/// The underlying MPMC queue stores its parameters (element size, capacity) in its header.
 #[pyclass]
 struct Queue {
     shared_mem: Option<ShmemWrapper>,
-    /// The underlying MPMC queue, whose header holds the parameters.
     queue: mpmc_queue::MpmcQueueOnBuffer<'static>,
     closed: Arc<AtomicBool>,
 }
@@ -87,7 +71,6 @@ impl Queue {
         capacity: Option<usize>,
         create: bool,
     ) -> PyResult<Self> {
-        // Determine queue parameters.
         let (elem_size, cap) = if create {
             (
                 element_size.ok_or_else(|| {
@@ -100,7 +83,6 @@ impl Queue {
                 })?,
             )
         } else {
-            // Open shared memory temporarily to read the header.
             let shmem_temp =
                 ShmemConf::new().os_id(&name).open().map_err(|e| {
                     PyRuntimeError::new_err(format!(
@@ -136,12 +118,13 @@ impl Queue {
             })?
         };
 
-        let buf_len = shmem.len();
-        let buf_ptr = shmem.as_ptr() as *mut MaybeUninit<u8>;
+        let shmem_wrapper = ShmemWrapper::new(shmem);
+
+        let buf_len = shmem_wrapper.len();
+        let buf_ptr = shmem_wrapper.as_ptr() as *mut MaybeUninit<u8>;
         let buf_slice =
             unsafe { std::slice::from_raw_parts_mut(buf_ptr, buf_len) };
 
-        // Initialize (or attach to) the queue in shared memory.
         let queue = unsafe {
             mpmc_queue::MpmcQueueOnBuffer::init_on_buffer(
                 buf_slice, elem_size, cap, create,
@@ -152,7 +135,7 @@ impl Queue {
             unsafe { std::mem::transmute(queue) };
 
         Ok(Self {
-            shared_mem: Some(ShmemWrapper(shmem)),
+            shared_mem: Some(shmem_wrapper),
             queue: queue_static,
             closed: Arc::new(AtomicBool::new(false)),
         })
@@ -178,14 +161,18 @@ impl Queue {
                 self.queue.header().element_size
             )));
         }
-        self.queue.enqueue(item)?;
+        Python::with_gil(|py| {
+            py.allow_threads(|| self.queue.enqueue(item))
+        })?;
         Ok(())
     }
 
     fn get_nowait(&self) -> PyResult<Vec<u8>> {
         self.check_active()?;
         let mut buf = vec![0u8; self.queue.header().element_size];
-        self.queue.dequeue(&mut buf)?;
+        Python::with_gil(|py| {
+            py.allow_threads(|| self.queue.dequeue(&mut buf))
+        })?;
         Ok(buf)
     }
 
@@ -233,7 +220,6 @@ impl Drop for Queue {
     }
 }
 
-/// The fastqueue module implementation.
 #[pymodule]
 fn fastqueue(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Queue>()?;
