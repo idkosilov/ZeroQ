@@ -1,8 +1,5 @@
 use shared_memory::Shmem;
 
-/// A wrapper for `Shmem` to allow it to be `Send` and `Sync`.
-///
-/// **Safety:** This wrapper ensures that `Shmem` is only accessed in a controlled manner.
 pub struct ShmemWrapper {
     shmem: Shmem,
 }
