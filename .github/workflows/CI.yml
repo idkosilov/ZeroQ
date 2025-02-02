@@ -123,12 +123,6 @@ jobs:
             manylinux: ''
             artifact_prefix: wheels-windows
             architecture: x64
-          - os: windows
-            runner: windows-latest
-            target: x86
-            manylinux: ''
-            artifact_prefix: wheels-windows
-            architecture: x86
           # macOS
           - os: macos
             runner: macos-13
@@ -216,12 +210,6 @@ jobs:
             manylinux: ''
             artifact_prefix: wheels-windows
             architecture: x64
-          - os: windows
-            runner: windows-latest
-            target: x86
-            manylinux: ''
-            artifact_prefix: wheels-windows
-            architecture: x86
           # macOS
           - os: macos
             runner: macos-13
