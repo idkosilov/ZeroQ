@@ -261,8 +261,8 @@ jobs:
       - name: Install the latest version of uv
         uses: astral-sh/setup-uv@v5
 
-      - name: Run ruff
-        run: uv pytest
+      - name: Run tests
+        run: uv run pytest
 
   sdist:
     name: Build sdist
