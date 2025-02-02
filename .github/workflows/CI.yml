@@ -13,6 +13,85 @@ on:
 permissions:
   contents: read
 
+x-common-matrix: &common-matrix
+  include:
+    # Linux (manylinux = auto)
+    - os: linux
+      runner: ubuntu-22.04
+      target: x86_64
+      manylinux: auto
+      artifact_prefix: wheels-linux
+    - os: linux
+      runner: ubuntu-22.04
+      target: x86
+      manylinux: auto
+      artifact_prefix: wheels-linux
+    - os: linux
+      runner: ubuntu-22.04
+      target: aarch64
+      manylinux: auto
+      artifact_prefix: wheels-linux
+    - os: linux
+      runner: ubuntu-22.04
+      target: armv7
+      manylinux: auto
+      artifact_prefix: wheels-linux
+    - os: linux
+      runner: ubuntu-22.04
+      target: s390x
+      manylinux: auto
+      artifact_prefix: wheels-linux
+    - os: linux
+      runner: ubuntu-22.04
+      target: ppc64le
+      manylinux: auto
+      artifact_prefix: wheels-linux
+    # Musllinux
+    - os: musllinux
+      runner: ubuntu-22.04
+      target: x86_64
+      manylinux: musllinux_1_2
+      artifact_prefix: wheels-musllinux
+    - os: musllinux
+      runner: ubuntu-22.04
+      target: x86
+      manylinux: musllinux_1_2
+      artifact_prefix: wheels-musllinux
+    - os: musllinux
+      runner: ubuntu-22.04
+      target: aarch64
+      manylinux: musllinux_1_2
+      artifact_prefix: wheels-musllinux
+    - os: musllinux
+      runner: ubuntu-22.04
+      target: armv7
+      manylinux: musllinux_1_2
+      artifact_prefix: wheels-musllinux
+    # Windows
+    - os: windows
+      runner: windows-latest
+      target: x64
+      manylinux: ''
+      artifact_prefix: wheels-windows
+      architecture: x64
+    - os: windows
+      runner: windows-latest
+      target: x86
+      manylinux: ''
+      artifact_prefix: wheels-windows
+      architecture: x86
+    # macOS
+    - os: macos
+      runner: macos-13
+      target: x86_64
+      manylinux: ''
+      artifact_prefix: wheels-macos
+    - os: macos
+      runner: macos-14
+      target: aarch64
+      manylinux: ''
+      artifact_prefix: wheels-macos
+
 jobs:
   rust-checks:
     name: Rust Formatting, Linting, and Compilation Checks
@@ -41,7 +120,7 @@ jobs:
         run: cargo check --all-targets --all-features
 
   python-checks:
-    name: Python Linting, Type Checking, and Testing (Ubuntu)
+    name: Python Linting and Type Checking
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -57,86 +136,11 @@ jobs:
         run: uv run mypy fastqueue tests
 
   build:
+    name: Build Wheels
     runs-on: ${{ matrix.runner }}
     needs: [ rust-checks, python-checks ]
     strategy:
-      matrix:
-        include:
-          # Linux (manylinux = auto)
-          - os: linux
-            runner: ubuntu-22.04
-            target: x86_64
-            manylinux: auto
-            artifact_prefix: wheels-linux
-          - os: linux
-            runner: ubuntu-22.04
-            target: x86
-            manylinux: auto
-            artifact_prefix: wheels-linux
-          - os: linux
-            runner: ubuntu-22.04
-            target: aarch64
-            manylinux: auto
-            artifact_prefix: wheels-linux
-          - os: linux
-            runner: ubuntu-22.04
-            target: armv7
-            manylinux: auto
-            artifact_prefix: wheels-linux
-          - os: linux
-            runner: ubuntu-22.04
-            target: s390x
-            manylinux: auto
-            artifact_prefix: wheels-linux
-          - os: linux
-            runner: ubuntu-22.04
-            target: ppc64le
-            manylinux: auto
-            artifact_prefix: wheels-linux
-          # Musllinux
-          - os: musllinux
-            runner: ubuntu-22.04
-            target: x86_64
-            manylinux: musllinux_1_2
-            artifact_prefix: wheels-musllinux
-          - os: musllinux
-            runner: ubuntu-22.04
-            target: x86
-            manylinux: musllinux_1_2
-            artifact_prefix: wheels-musllinux
-          - os: musllinux
-            runner: ubuntu-22.04
-            target: aarch64
-            manylinux: musllinux_1_2
-            artifact_prefix: wheels-musllinux
-          - os: musllinux
-            runner: ubuntu-22.04
-            target: armv7
-            manylinux: musllinux_1_2
-            artifact_prefix: wheels-musllinux
-          - os: windows
-            runner: windows-latest
-            target: x64
-            manylinux: ''
-            artifact_prefix: wheels-windows
-            architecture: x64
-          - os: windows
-            runner: windows-latest
-            target: x86
-            manylinux: ''
-            artifact_prefix: wheels-windows
-            architecture: x86
-          # macOS
-          - os: macos
-            runner: macos-13
-            target: x86_64
-            manylinux: ''
-            artifact_prefix: wheels-macos
-          - os: macos
-            runner: macos-14
-            target: aarch64
-            manylinux: ''
-            artifact_prefix: wheels-macos
+      matrix: *common-matrix
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -168,7 +172,24 @@ jobs:
           name: ${{ matrix.artifact_prefix }}-${{ matrix.target }}
           path: dist
 
+  tests:
+    name: Test on All Platforms with pytest
+    runs-on: ${{ matrix.runner }}
+    needs: [ rust-checks, python-checks ]
+    strategy:
+      matrix: *common-matrix
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Run ruff
+        run: uv pytest
+
   sdist:
+    name: Build sdist
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
