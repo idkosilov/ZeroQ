@@ -123,6 +123,12 @@ jobs:
             manylinux: ''
             artifact_prefix: wheels-windows
             architecture: x64
+          - os: windows
+            runner: windows-latest
+            target: x86
+            manylinux: ''
+            artifact_prefix: wheels-windows
+            architecture: x86
           # macOS
           - os: macos
             runner: macos-13
@@ -140,6 +146,8 @@ jobs:
 
       - name: Install the latest version of uv
         uses: astral-sh/setup-uv@v5
+        with:
+          python-version: 3.11
 
       - name: Run tests
         run: uv run pytest
@@ -210,6 +218,12 @@ jobs:
             manylinux: ''
             artifact_prefix: wheels-windows
             architecture: x64
+          - os: windows
+            runner: windows-latest
+            target: x86
+            manylinux: ''
+            artifact_prefix: wheels-windows
+            architecture: x86
           # macOS
           - os: macos
             runner: macos-13
