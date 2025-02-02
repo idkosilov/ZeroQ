@@ -248,6 +248,15 @@ impl Queue {
     fn empty(&self) -> PyResult<bool> {
         Ok(self.__len__()? == 0)
     }
+
+    /// Closes the queue, releasing the shared memory segment.
+    fn close(&mut self) {
+        if self.closed.load(Ordering::Relaxed) {
+            return;
+        }
+        self.closed.store(true, Ordering::Relaxed);
+        self.shared_mem.take();
+    }
 }
 
 impl Drop for Queue {

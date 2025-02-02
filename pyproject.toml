@@ -13,8 +13,11 @@ build-backend = "maturin"
 
 [dependency-groups]
 dev = [
+    "covdefaults>=2.3.0",
+    "coverage>=7.6.10",
     "hypothesis>=6.124.9",
     "mypy>=1.14.1",
+    "pytest-cov>=6.0.0",
     "pytest-randomly>=3.16.0",
     "pytest-timeout>=2.3.1",
     "pytest>=8.3.4",
@@ -118,6 +121,14 @@ addopts = [
   "--fail-on-template-vars",
   # Output:
   "--tb=short",
+  # Coverage:
+  "--cov=fastqueue",
+  "--cov=tests",
+  "--cov-branch",
+  "--cov-report=term-missing:skip-covered",
+  "--cov-report=html",
+  "--cov-report=xml",
+  "--cov-fail-under=100",
 ]
 
 filterwarnings = [

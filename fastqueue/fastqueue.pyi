@@ -85,3 +85,6 @@ class Queue:
 
     def __bool__(self) -> bool:
         """Returns True if the queue is not empty."""
+
+    def close(self) -> None:
+        """Closes the queue and releases the shared memory segment."""

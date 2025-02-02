@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
@@ -12,26 +14,19 @@ from hypothesis.stateful import (
 from fastqueue import Empty, Full, Queue
 
 
-def powers_of_two(min_exp: int, max_exp: int):
-    """Return a strategy for powers of two in the given range."""
-    return st.builds(
-        lambda exp: 2**exp, st.integers(min_value=min_exp, max_value=max_exp)
-    )
-
-
 @st.composite
-def queue_and_items(draw):
+def queue_and_items(draw: Any) -> tuple[int, int, list[bytes]]:
     """Return (element_size, capacity, items) for testing the queue."""
     # Generate a valid element size.
-    element_size = draw(st.integers(min_value=8, max_value=1024))
+    element_size: int = draw(st.integers(min_value=8, max_value=1024))
     # Generate a capacity that is a power of two.
-    capacity = draw(
+    capacity: int = draw(
         st.integers(min_value=2, max_value=1024).filter(
             lambda x: (x & (x - 1)) == 0
         )
     )
     # Generate a list of items exactly equal to element_size.
-    items = draw(
+    items: list[bytes] = draw(
         st.lists(
             st.binary(min_size=element_size, max_size=element_size),
             max_size=capacity,
@@ -42,10 +37,10 @@ def queue_and_items(draw):
 
 
 @given(data=queue_and_items())
-def test_fifo_order(data):
+def test_fifo_order(data: tuple[int, int, list[bytes]]) -> None:
     """Test that items are dequeued in FIFO order."""
     element_size, capacity, items = data
-    queue = Queue(
+    queue: Queue = Queue(
         name='test-fifo',
         element_size=element_size,
         capacity=capacity,
@@ -54,7 +49,7 @@ def test_fifo_order(data):
 
     for item in items:
         queue.put_nowait(item)
-    dequeued = []
+    dequeued: list[bytes] = []
     while not queue.empty():
         dequeued.append(queue.get_nowait())
 
@@ -67,9 +62,9 @@ def test_fifo_order(data):
         lambda x: (x & (x - 1)) == 0
     ),
 )
-def test_put_nowait_full(element_size: int, capacity: int):
+def test_put_nowait_full(element_size: int, capacity: int) -> None:
     """Test that put_nowait raises Full when the queue is full."""
-    queue = Queue(
+    queue: Queue = Queue(
         name='test-full',
         element_size=element_size,
         capacity=capacity,
@@ -88,9 +83,9 @@ def test_put_nowait_full(element_size: int, capacity: int):
         lambda x: (x & (x - 1)) == 0
     ),
 )
-def test_get_nowait_empty(element_size: int, capacity: int):
+def test_get_nowait_empty(element_size: int, capacity: int) -> None:
     """Test that get_nowait raises Empty when the queue is empty."""
-    queue = Queue(
+    queue: Queue = Queue(
         name='test-empty',
         element_size=element_size,
         capacity=capacity,
@@ -107,9 +102,9 @@ def test_get_nowait_empty(element_size: int, capacity: int):
         lambda x: (x & (x - 1)) == 0
     ),
 )
-def test_bool_semantics(element_size: int, capacity: int):
+def test_bool_semantics(element_size: int, capacity: int) -> None:
     """Test that __bool__ reflects the queue empty state."""
-    queue = Queue(
+    queue: Queue = Queue(
         name='test-bool',
         element_size=element_size,
         capacity=capacity,
@@ -122,10 +117,10 @@ def test_bool_semantics(element_size: int, capacity: int):
 
 
 @given(data=queue_and_items())
-def test_len_invariant(data):
+def test_len_invariant(data: tuple[int, int, list[bytes]]) -> None:
     """Test that len(queue) is between 0 and capacity."""
     element_size, capacity, items = data
-    queue = Queue(
+    queue: Queue = Queue(
         name='test-len',
         element_size=element_size,
         capacity=capacity,
@@ -146,13 +141,18 @@ def test_len_invariant(data):
 class QueueStateMachine(RuleBasedStateMachine):
     """State machine to test queue operations and FIFO ordering."""
 
+    element_size: int
+    capacity: int
+    queue: Queue
+    model: list[bytes]
+
     @initialize(
         element_size=st.integers(min_value=8, max_value=1024),
         capacity=st.integers(min_value=2, max_value=1024).filter(
             lambda x: (x & (x - 1)) == 0
         ),
     )
-    def init_queue(self, element_size, capacity):
+    def init_queue(self, element_size: int, capacity: int) -> None:
         """Initialize the queue and the model list."""
         self.element_size = element_size
         self.capacity = capacity
@@ -162,13 +162,13 @@ class QueueStateMachine(RuleBasedStateMachine):
             capacity=capacity,
             create=True,
         )
-        self.model = []  # A list model to mimic the queue
+        self.model = []
 
     @rule(data=st.data())
     @precondition(lambda self: len(self.model) < self.capacity)
-    def enqueue(self, data):
+    def enqueue(self, data: Any) -> None:
         """Enqueue an item and update the model list."""
-        item = data.draw(
+        item: bytes = data.draw(
             st.binary(min_size=self.element_size, max_size=self.element_size)
         )
         self.queue.put_nowait(item)
@@ -176,65 +176,61 @@ class QueueStateMachine(RuleBasedStateMachine):
 
     @rule()
     @precondition(lambda self: len(self.model) > 0)
-    def dequeue(self):
+    def dequeue(self) -> None:
         """Dequeue an item and compare with the model's first item."""
-        result = self.queue.get_nowait()
-        expected = self.model.pop(0)
+        result: bytes = self.queue.get_nowait()
+        expected: bytes = self.model.pop(0)
         assert result == expected
 
+    @rule(data=st.data())
+    @precondition(lambda self: len(self.model) == self.queue.maxsize)
+    def enqueue_full(self, data: Any) -> None:
+        """Try to enqueue into a full queue and expect a Full exception."""
+        item: bytes = data.draw(
+            st.binary(min_size=self.element_size, max_size=self.element_size)
+        )
+        with pytest.raises(Full):
+            self.queue.put_nowait(item)
+
+    @rule()
+    @precondition(lambda self: len(self.model) == 0)
+    def dequeue_empty(self) -> None:
+        """Try to dequeue from an empty queue and expect an Empty exception."""
+        with pytest.raises(Empty):
+            self.queue.get_nowait()
+
     @invariant()
-    def check_length(self):
+    def check_length(self) -> None:
         """Invariant: len(queue) equals model length and is within bounds."""
-        qlen = len(self.queue)
+        qlen: int = len(self.queue)
         assert qlen == len(self.model)
         assert 0 <= qlen <= self.capacity
 
     @invariant()
-    def check_capacity_limit(self):
+    def check_capacity_limit(self) -> None:
         """Invariant: Queue length never exceeds its maximum capacity."""
         assert len(self.queue) <= self.capacity
         assert self.queue.full() == (len(self.queue) == self.capacity)
 
     @invariant()
-    def check_empty_behavior(self):
+    def check_empty_behavior(self) -> None:
         """Invariant: empty() is True if and only if len(queue) == 0."""
         assert self.queue.empty() == (len(self.queue) == 0)
 
     @invariant()
-    def check_put_get_consistency(self):
+    def check_put_get_consistency(self) -> None:
         """Invariant: Queue length equals put ops minus get ops."""
         assert len(self.queue) == len(self.model)
 
     @invariant()
-    def check_blocking_behavior(self):
-        """Invariant: put on full queue and get on empty queue must fail."""
-        if self.queue.full():
-            with pytest.raises(Full):
-                self.queue.put(b'\x00' * self.element_size, timeout=0.001)
-        if self.queue.empty():
-            with pytest.raises(Empty):
-                self.queue.get(timeout=0.001)
-
-    @invariant()
-    def check_data_integrity(self):
-        """Invariant: Dequeued item must have been enqueued before."""
-        if self.model:
-            observed = self.queue.get_nowait()
-            assert observed in self.model, 'Dequeued item was never enqueued'
-            self.model.remove(observed)  # Remove only after a successful match
-
-    @invariant()
-    def check_shared_memory_consistency(self):
+    def check_shared_memory_consistency(self) -> None:
         """Invariant: Another queue instance must see the same length."""
-        other_queue = Queue(name='state-queue', create=False)
+        other_queue: Queue = Queue(name='state-queue', create=False)
         assert len(other_queue) == len(self.queue)
 
-    def teardown(self):
+    def teardown(self) -> None:
         """Clean up shared memory after the test run."""
-        if hasattr(self, 'queue') and self.queue:
-            del self.queue
-
-        self.queue = None
+        self.queue.close()
 
 
 TestQueueStateMachine = QueueStateMachine.TestCase
