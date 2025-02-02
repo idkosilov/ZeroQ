@@ -40,9 +40,28 @@ jobs:
       - name: Run cargo check (Compilation check)
         run: cargo check --all-targets --all-features
 
+  python-checks:
+    name: Python Linting, Type Checking, and Testing (Ubuntu)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: 3.10
+          pyproject-file: 'pyproject.toml'
+
+      - name: Run ruff
+        run: uv run ruff check
+
+      - name: Run mypy
+        run: uv run mypy fastqueue tests
+
   build:
     runs-on: ${{ matrix.runner }}
-    needs: [ rust-checks ]
+    needs: [ rust-checks, python-checks ]
     strategy:
       matrix:
         include:
