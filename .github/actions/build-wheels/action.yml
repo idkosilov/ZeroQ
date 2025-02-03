@@ -11,6 +11,19 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Set up Python (Windows)
+      if: ${{ matrix.os == 'windows' }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+        architecture: ${{ matrix.architecture }}
+
+    - name: Set up Python (Non-Windows)
+      if: ${{ matrix.os != 'windows' }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+
     - name: Build wheels
       uses: PyO3/maturin-action@v1
       with:
