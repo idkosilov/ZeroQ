@@ -43,35 +43,6 @@ wheels = [
 ]
 
 [[package]]
-name = "zeroq"
-version = "0.1.0"
-source = { editable = "." }
-
-[package.dependency-groups]
-dev = [
-    { name = "hypothesis" },
-    { name = "mypy" },
-    { name = "pytest" },
-    { name = "pytest-benchmark" },
-    { name = "pytest-randomly" },
-    { name = "pytest-timeout" },
-    { name = "ruff" },
-]
-
-[package.metadata]
-
-[package.metadata.dependency-groups]
-dev = [
-    { name = "hypothesis", specifier = ">=6.124.9" },
-    { name = "mypy", specifier = ">=1.14.1" },
-    { name = "pytest", specifier = ">=8.3.4" },
-    { name = "pytest-benchmark", specifier = ">=5.1.0" },
-    { name = "pytest-randomly", specifier = ">=3.16.0" },
-    { name = "pytest-timeout", specifier = ">=2.3.1" },
-    { name = "ruff", specifier = ">=0.9.4" },
-]
-
-[[package]]
 name = "hypothesis"
 version = "6.124.9"
 source = { registry = "https://pypi.org/simple" }
@@ -321,6 +292,35 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/df/db/f35a00659bc03fec321ba8bce9420de607a1d37f8342eee1863174c69557/typing_extensions-4.12.2.tar.gz", hash = "sha256:1a7ead55c7e559dd4dee8856e3a88b41225abfe1ce8df57b7c13915fe121ffb8", size = 85321 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/26/9f/ad63fc0248c5379346306f8668cda6e2e2e9c95e01216d2b8ffd9ff037d0/typing_extensions-4.12.2-py3-none-any.whl", hash = "sha256:04e5ca0351e0f3f85c6853954072df659d0d13fac324d0072316b67d7794700d", size = 37438 },
+]
+
+[[package]]
+name = "zeroq"
+version = "0.1.0"
+source = { editable = "." }
+
+[package.dependency-groups]
+dev = [
+    { name = "hypothesis" },
+    { name = "mypy" },
+    { name = "pytest" },
+    { name = "pytest-benchmark" },
+    { name = "pytest-randomly" },
+    { name = "pytest-timeout" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+
+[package.metadata.dependency-groups]
+dev = [
+    { name = "hypothesis", specifier = ">=6.124.9" },
+    { name = "mypy", specifier = ">=1.14.1" },
+    { name = "pytest", specifier = ">=8.3.4" },
+    { name = "pytest-benchmark", specifier = ">=5.1.0" },
+    { name = "pytest-randomly", specifier = ">=3.16.0" },
+    { name = "pytest-timeout", specifier = ">=2.3.1" },
+    { name = "ruff", specifier = ">=0.9.4" },
 ]
 
 [[package]]
