@@ -60,5 +60,6 @@ jobs:
       with:
         name: benchmark-results
         path: |
+          benchmark.json
           benchmark_plot.png
           benchmark_results.csv
