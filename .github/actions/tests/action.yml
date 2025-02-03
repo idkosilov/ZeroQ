@@ -8,9 +8,6 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
     - name: Install the latest version of uv
       uses: astral-sh/setup-uv@v5
       with:

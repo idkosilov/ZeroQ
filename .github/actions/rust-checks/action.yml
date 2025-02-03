@@ -3,9 +3,6 @@ description: Run Rust Formatting, Linting, and Compilation Checks
 runs:
   using: "composite"
   steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
     - name: Install Rust
       uses: dtolnay/rust-toolchain@stable
       with:

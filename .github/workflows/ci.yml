@@ -11,6 +11,8 @@ jobs:
     name: Rust Checks
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
       - name: Run Rust Checks
         uses: ./.github/actions/rust-checks
 
@@ -19,6 +21,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: rust-checks
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
       - name: Run Python Checks
         uses: ./.github/actions/python-checks
 
@@ -107,6 +111,8 @@ jobs:
             artifact_prefix: wheels-macos
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
       - name: Run Tests
         uses: ./.github/actions/tests
         with:
@@ -198,6 +204,8 @@ jobs:
             artifact_prefix: wheels-macos
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
       - name: Build Package
         uses: ./.github/actions/build-wheels
         with:
