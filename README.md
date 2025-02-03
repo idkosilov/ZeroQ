@@ -72,37 +72,47 @@ Once installed, you can easily integrate fastqueue into your Python projects. Be
 
 ```python
 from fastqueue import Queue, Empty, Full
+import multiprocessing
+import time
 
-# Create a new queue.
-# - 'element_size' specifies the size (in bytes) of each element.
-# - 'capacity' must be a power of two.
-# - 'create=True' indicates that a new shared memory segment should be created.
-queue = Queue(name="my-shm-queue", element_size=32, capacity=1024, create=True)
+QUEUE_NAME = "shared-queue"
+ELEMENT_SIZE = 32  # Fixed size for each message (bytes)
+CAPACITY = 1024  # Must be a power of two
 
-# Blocking enqueue.
-try:
-    queue.put(b"example_data")
-except Full:
-    print("Queue is full!")
+def producer():
+    """ Producer process that enqueues data into the shared queue. """
+    queue = Queue(name=QUEUE_NAME, element_size=ELEMENT_SIZE, capacity=CAPACITY, create=True)
 
-# Blocking dequeue with a timeout of 1 second.
-try:
-    item = queue.get(timeout=1.0)
-    print("Dequeued item:", item)
-except Empty:
-    print("Queue is empty!")
+    for i in range(10):
+        data = f"message_{i}".encode()  # Convert string to bytes
+        try:
+            queue.put(data)
+            print(f"[Producer] Produced: {data.decode()}")
+        except Full:
+            print("[Producer] Queue is full! Waiting before retrying...")
+            time.sleep(0.1)
 
-# Non-blocking operations.
-try:
-    queue.put_nowait(b"another_item")
-except Full:
-    print("Queue is full (non-blocking)!")
+def consumer():
+    """ Consumer process that dequeues data from the shared queue. """
+    queue = Queue(name=QUEUE_NAME, element_size=ELEMENT_SIZE, capacity=CAPACITY, create=False)
 
-try:
-    item = queue.get_nowait()
-    print("Dequeued item (non-blocking):", item)
-except Empty:
-    print("Queue is empty (non-blocking)!")
+    while True:
+        try:
+            item = queue.get()
+            print(f"[Consumer] Consumed: {item.decode()}")
+        except Empty:
+            print("[Consumer] Queue is empty! Consumer exiting...")
+            break
+
+if __name__ == "__main__":
+    producer_process = multiprocessing.Process(target=producer)
+    consumer_process = multiprocessing.Process(target=consumer)
+
+    producer_process.start()
+    consumer_process.start()
+
+    producer_process.join()
+    consumer_process.join()
 ```
 
 
