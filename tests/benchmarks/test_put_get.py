@@ -24,7 +24,7 @@ def put_item_get_item(queue: IQueue, item: bytes) -> None:
 
 queue_types = ['multiprocessing', 'zeroq']
 
-item_sizes = [2**p for p in range(1, 25, 4)]
+item_sizes = [2**p for p in range(1, 28, 4)]
 
 
 @pytest.mark.parametrize('queue_type', queue_types)
