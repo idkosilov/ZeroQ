@@ -41,6 +41,20 @@ jobs:
       run: |
         uv run python tests/benchmarks/build_plot.py benchmark_results.csv -o benchmark_plot.png
 
+    - name: Update README
+      run: |
+        cp benchmark_plot.png ./tests/benchmarks/benchmark_plot.png
+
+    - name: Commit and push changes
+      run: |
+        git config --global user.name "GitHub Actions"
+        git config --global user.email "actions@github.com"
+        git add benchmark_plot.png
+        git commit -m "Update README with latest benchmark results [skip ci]"
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
