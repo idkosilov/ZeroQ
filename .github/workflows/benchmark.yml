@@ -26,7 +26,7 @@ jobs:
 
     - name: Run benchmarks
       run: |
-        pytest tests/benchmarks/ \
+        uv run pytest tests/benchmarks/ \
           --benchmark-only \
           --benchmark-autosave \
           --timeout=0 \
@@ -35,7 +35,7 @@ jobs:
     - name: Generate CSV report
       run: |
         LATEST=$(ls -t .benchmarks/*.json | head -1 | xargs basename -s .json)
-        py.test-benchmark compare $LATEST --csv=benchmark_results.csv
+        uv run py.test-benchmark compare $LATEST --csv=benchmark_results.csv
 
     - name: Generate plot
       run: |
