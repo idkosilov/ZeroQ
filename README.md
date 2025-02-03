@@ -24,27 +24,14 @@ pip install zeroq
 
 ## Benchmarks
 
-![benchmarks](tests/benchmarks/benchmark_plot.png)
+![benchmarks](https://raw.githubusercontent.com/idkosilov/ZeroQ/refs/heads/main/benchmark_plot.png)
 
 The following benchmarks compare `zeroq` with Python's standard 
 `multiprocessing.Queue` across different payload sizes. Tests were conducted 
 on an **Apple M1 Pro** CPU with Python 3.11.10. Each test measures 
 the time for a complete `put`+`get` operation cycle (1000 iterations). 
 
-| Payload size | Queue Type | Mean Time per Op | Ops/sec | Speedup |
-|--------------|------------|------------------|---------|---------|
-| 8 B          | `zeroq`    | 235.6 ns         | 4.25M   | 50x     |
-|              | `mp.Queue` | 11.84 μs         | 84.4K   |         |
-| 128 B        | `zeroq`    | 252.8 ns         | 3.96M   | 47x     |
-|              | `mp.Queue` | 11.86 μs         | 84.3K   |         |
-| 1 KiB        | `zeroq`    | 345.4 ns         | 2.90M   | 37x     |
-|              | `mp.Queue` | 12.89 μs         | 77.6K   |         |
-| 256 KiB      | `zeroq`    | 23.5 μs          | 42.5K   | 6x      |
-|              | `mp.Queue` | 142.0 μs         | 7.04K   |         |
-| 8 MiB        | `zeroq`    | 1.07 ms          | 936     | 13.7x   |
-|              | `mp.Queue` | 14.60 ms         | 68.5    |         |
-| 32 MiB       | `zeroq`    | 6.03 ms          | 166     | 7.7x    |
-|              | `mp.Queue` | 46.31 ms         | 22      |         |
+### Observations
 
 zeroq significantly accelerates interprocess communication, 
 delivering up to 50× faster data transfer compared to `multiprocessing.Queue`. 
