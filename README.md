@@ -33,7 +33,7 @@ the time for a complete `put`+`get` operation cycle (1000 iterations).
 
 ### Performance Comparison
 
-zeroq demonstrates up to 90x faster performance compared to multiprocessing.Queue,
+zeroq demonstrates **up to 90x faster** performance compared to multiprocessing.Queue,
 especially for small payload sizes. This performance gain is achieved through shared memory and lock-free 
 synchronization, eliminating the overhead of serialization and dynamic memory 
 allocation.
