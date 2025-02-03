@@ -31,11 +31,10 @@ the time for a complete `put`+`get` operation cycle (1000 iterations).
 
 ![benchmarks](https://raw.githubusercontent.com/idkosilov/ZeroQ/refs/heads/main/benchmark_plot.png)
 
-### Observations
+### Performance Comparison
 
-zeroq significantly accelerates interprocess communication, 
-delivering up to 50× faster data transfer compared to `multiprocessing.Queue`. 
-This performance gain is achieved through shared memory and lock-free 
+zeroq demonstrates up to 90x faster performance compared to multiprocessing.Queue,
+especially for small payload sizes. This performance gain is achieved through shared memory and lock-free 
 synchronization, eliminating the overhead of serialization and dynamic memory 
 allocation.
 
