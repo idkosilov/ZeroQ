@@ -218,6 +218,7 @@ jobs:
         with:
           target: ${{ matrix.target }}
           artifact_prefix: ${{ matrix.artifact_prefix }}
+          manylinux: '${{ matrix.manylinux }}'
 
   sdist:
     name: Build sdist
