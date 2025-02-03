@@ -27,6 +27,7 @@ build-backend = "maturin"
 [dependency-groups]
 dev = [
     "hypothesis>=6.124.9",
+    "matplotlib>=3.9.4",
     "mypy>=1.14.1",
     "pytest-benchmark>=5.1.0",
     "pytest-randomly>=3.16.0",

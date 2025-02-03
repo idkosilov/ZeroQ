@@ -1,0 +1,50 @@
+name: Benchmark and Plot
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to run benchmarks on'
+        required: true
+        default: 'main'
+        type: string
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install the latest version of uv
+      uses: astral-sh/setup-uv@v5
+
+    - name: Run benchmarks
+      run: |
+        pytest tests/benchmarks/ \
+          --benchmark-only \
+          --benchmark-autosave \
+          --timeout=0 \
+          --benchmark-disable-gc
+
+    - name: Generate CSV report
+      run: |
+        LATEST=$(ls -t .benchmarks/*.json | head -1 | xargs basename -s .json)
+        py.test-benchmark compare $LATEST --csv=benchmark_results.csv
+
+    - name: Generate plot
+      run: |
+        python tests/benchmarks/build_plot.py benchmark_results.csv -o benchmark_plot.png
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: benchmark-results
+        path: |
+          benchmark_plot.png
+          benchmark_results.csv

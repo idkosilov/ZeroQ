@@ -1,5 +1,5 @@
 import multiprocessing
-from typing import Callable, Protocol
+from typing import Protocol
 
 import pytest
 
@@ -22,33 +22,34 @@ def put_item_get_item(queue: IQueue, item: bytes) -> None:
     queue.get()
 
 
-queue_factories = [
-    pytest.param(lambda _: multiprocessing.Queue(), id='mp-queue'),
-    pytest.param(
-        lambda element_size: zeroq.Queue(
-            name='fast-queue-benchmarks',
-            element_size=element_size,
-            capacity=32,
-            create=True,
-        ),
-        id='fast-queue',
-    ),
-]
+queue_types = ['multiprocessing', 'zeroq']
 
-item_sizes = [8, 128, 1024, 256 * 1024, 1024 * 1024 * 8, 1024 * 1024 * 32]
+item_sizes = [2**p for p in range(1, 25, 4)]
 
 
-@pytest.mark.parametrize('queue_factory', queue_factories)
+@pytest.mark.parametrize('queue_type', queue_types)
 @pytest.mark.parametrize('item_size', item_sizes)
 def test_put_item_get_item(
     benchmark,
-    queue_factory: Callable[[int], IQueue],
+    queue_type: type[IQueue],
     item_size: int,
 ) -> None:
     """Benchmarks alternating put/get operations."""
-    queue = queue_factory(item_size)
+    queue: IQueue
+    if queue_type == 'multiprocessing':
+        queue = multiprocessing.Queue()
+    else:
+        queue = zeroq.Queue(
+            name='benchmark',
+            element_size=item_size,
+            capacity=8,
+            create=True,
+        )
+
     item = bytes([1] * item_size)
 
     benchmark.pedantic(
-        put_item_get_item, args=(queue, item), iterations=1000, rounds=10
+        put_item_get_item,
+        args=(queue, item),
+        iterations=1000,
     )
