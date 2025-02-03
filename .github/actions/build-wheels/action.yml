@@ -24,6 +24,14 @@ runs:
       with:
         python-version: '3.x'
 
+    - name: Install 32-bit dependencies (Linux only)
+      if: contains(inputs.target, 'i686') && matrix.os == 'linux'
+      run: |
+        sudo dpkg --add-architecture i386
+        sudo apt-get update
+        sudo apt-get install -y gcc-multilib libc6-dev-i386
+      shell: bash
+
     - name: Build wheels
       uses: PyO3/maturin-action@v1
       with:
