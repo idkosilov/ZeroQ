@@ -26,7 +26,7 @@ pip install zeroq
 
 The following benchmarks compare `zeroq` with Python's standard 
 `multiprocessing.Queue` across different payload sizes. Tests were conducted 
-on an **Apple M1 Pro** CPU with Python 3.11.10. Each test measures 
+on a **GitHub Actions runner (Ubuntu latest)** with Python 3.11. Each test measures 
 the time for a complete `put`+`get` operation cycle (1000 iterations).
 
 ![benchmarks](https://raw.githubusercontent.com/idkosilov/ZeroQ/refs/heads/main/benchmark_plot.png)
