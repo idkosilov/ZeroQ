@@ -1,0 +1,29 @@
+name: Build Wheels & sdist
+description: Build Python wheels and sdist
+inputs:
+  target:
+    required: true
+  artifact_prefix:
+    required: true
+  manylinux:
+    required: false
+    default: ""
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Build wheels
+      uses: PyO3/maturin-action@v1
+      with:
+        target: ${{ inputs.target }}
+        args: --release --out dist --find-interpreter
+        sccache: "true"
+        manylinux: ${{ inputs.manylinux }}
+
+    - name: Upload wheels
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact_prefix }}-${{ inputs.target }}
+        path: dist

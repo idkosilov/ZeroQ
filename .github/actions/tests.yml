@@ -1,0 +1,21 @@
+name: Run Tests
+description: Run pytest on all platforms
+inputs:
+  runner:
+    required: true
+  target:
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install the latest version of uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        python-version: 3.11
+
+    - name: Run tests
+      run: uv run pytest
+      shell: bash
