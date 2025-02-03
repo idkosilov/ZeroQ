@@ -39,7 +39,7 @@ jobs:
 
     - name: Generate plot
       run: |
-        python tests/benchmarks/build_plot.py benchmark_results.csv -o benchmark_plot.png
+        uv run python tests/benchmarks/build_plot.py benchmark_results.csv -o benchmark_plot.png
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
