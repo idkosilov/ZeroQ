@@ -68,51 +68,85 @@ high-speed, low-latency communication.
 
 ## Usage
 
-Once installed, you can easily integrate fastqueue into your Python projects. Below is a basic usage example:
+Once installed, you can easily integrate fastqueue into your Python projects. Below is an example of video player.
+
+To run this example, install OpenCV and FFmpeg:
+
+```bash
+pip install opencv-python
+```
+
+Make sure FFmpeg is installed and accessible via the command line. You can download it from ffmpeg.org and add it to your system’s PATH.
+
 
 ```python
-from fastqueue import Queue, Empty, Full
 import multiprocessing
-import time
+import subprocess
 
-QUEUE_NAME = "shared-queue"
-ELEMENT_SIZE = 32  # Fixed size for each message (bytes)
-CAPACITY = 1024  # Must be a power of two
+import cv2
+import numpy as np
 
-def producer():
-    """ Producer process that enqueues data into the shared queue. """
-    queue = Queue(name=QUEUE_NAME, element_size=ELEMENT_SIZE, capacity=CAPACITY, create=True)
+from fastqueue import Empty, Full, Queue
 
-    for i in range(10):
-        data = f"message_{i}".encode()  # Convert string to bytes
+
+def producer(video_path: str) -> None:
+    """Reads video frames via FFmpeg and pushes them to the shared queue."""
+    queue = Queue(
+        name='video-queue',
+        element_size=1920 * 1080 * 3,
+        capacity=16,
+        create=True,
+    )
+
+    process = subprocess.Popen(
+        [
+            'ffmpeg', '-re', '-i', video_path,
+            '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-vf', 'scale=1920:1080',
+            '-vcodec', 'rawvideo', '-an', '-nostdin', 'pipe:1',
+        ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        bufsize=1920 * 1080 * 3,
+    )
+
+    while True:
+        raw_frame = process.stdout.read(1920 * 1080 * 3)
+        if not raw_frame:
+            break
+
         try:
-            queue.put(data)
-            print(f"[Producer] Produced: {data.decode()}")
+            queue.put(raw_frame, timeout=1.0)
         except Full:
-            print("[Producer] Queue is full! Waiting before retrying...")
-            time.sleep(0.1)
+            break
+
 
 def consumer():
-    """ Consumer process that dequeues data from the shared queue. """
-    queue = Queue(name=QUEUE_NAME, element_size=ELEMENT_SIZE, capacity=CAPACITY, create=False)
+    """Retrieves frames from the queue and displays them using OpenCV."""
+    queue = Queue(name='video-queue', create=False)
 
     while True:
         try:
-            item = queue.get()
-            print(f"[Consumer] Consumed: {item.decode()}")
+            frame_data = queue.get(timeout=1.0)
         except Empty:
-            print("[Consumer] Queue is empty! Consumer exiting...")
             break
 
-if __name__ == "__main__":
-    producer_process = multiprocessing.Process(target=producer)
-    consumer_process = multiprocessing.Process(target=consumer)
+        frame = (
+            np.frombuffer(frame_data, dtype=np.uint8)
+            .reshape((1080, 1920, 3))
+        )
+        cv2.imshow('Video Stream', frame)
 
-    producer_process.start()
-    consumer_process.start()
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
-    producer_process.join()
-    consumer_process.join()
+    cv2.destroyAllWindows()
+
+
+if __name__ == '__main__':
+    video_path = 'your_video.mp4'
+
+    multiprocessing.Process(target=producer, args=(video_path,)).start()
+    multiprocessing.Process(target=consumer).start()
 ```
 
 
