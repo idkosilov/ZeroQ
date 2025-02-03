@@ -55,7 +55,7 @@ jobs:
         run: uv run ruff check
 
       - name: Run mypy
-        run: uv run mypy fastqueue tests
+        run: uv run mypy zeroq tests
 
   tests:
     name: Test on All Platforms with pytest

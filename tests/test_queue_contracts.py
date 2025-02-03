@@ -11,7 +11,7 @@ from hypothesis.stateful import (
     rule,
 )
 
-from fastqueue import Empty, Full, Queue
+from zeroq import Empty, Full, Queue
 
 
 @st.composite

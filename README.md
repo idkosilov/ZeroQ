@@ -1,8 +1,8 @@
-# fastqueue
+# zeroq
 
-[fastqueue](https://github.com/idkosilov/fastqueue) is a high-performance, shared-memory, 
+[zeroq](https://github.com/idkosilov/zeroq) is a high-performance, shared-memory, 
 multi-producer/multi-consumer (MPMC) queue written in Rust with Python bindings. 
-Designed for concurrent and inter-process communication, fastqueue delivers 
+Designed for concurrent and inter-process communication, zeroq delivers 
 low latency and strict FIFO (First-In, First-Out) behavior even under heavy load.
 
 ## Features
@@ -19,34 +19,34 @@ low latency and strict FIFO (First-In, First-Out) behavior even under heavy load
 If pre-built wheels are available on [PyPI](https://pypi.org), installation is as simple as:
 
 ```bash
-pip install fastqueue
+pip install zeroq
 ```
 
 ## Benchmarks
 
 ![benchmarks](tests/benchmarks/benchmark_plot.png)
 
-The following benchmarks compare `fastqueue` with Python's standard 
+The following benchmarks compare `zeroq` with Python's standard 
 `multiprocessing.Queue` across different payload sizes. Tests were conducted 
 on an **Apple M1 Pro** CPU with Python 3.11.10. Each test measures 
 the time for a complete `put`+`get` operation cycle (1000 iterations). 
 
-| Payload size | Queue Type  | Mean Time per Op | Ops/sec | Speedup |
-|--------------|-------------|------------------|---------|---------|
-| 8 B          | `fastqueue` | 235.6 ns         | 4.25M   | 50x     |
-|              | `mp.Queue`  | 11.84 μs         | 84.4K   |         |
-| 128 B        | `fastqueue` | 252.8 ns         | 3.96M   | 47x     |
-|              | `mp.Queue`  | 11.86 μs         | 84.3K   |         |
-| 1 KiB        | `fastqueue` | 345.4 ns         | 2.90M   | 37x     |
-|              | `mp.Queue`  | 12.89 μs         | 77.6K   |         |
-| 256 KiB      | `fastqueue` | 23.5 μs          | 42.5K   | 6x      |
-|              | `mp.Queue`  | 142.0 μs         | 7.04K   |         |
-| 8 MiB        | `fastqueue` | 1.07 ms          | 936     | 13.7x   |
-|              | `mp.Queue`  | 14.60 ms         | 68.5    |         |
-| 32 MiB       | `fastqueue` | 6.03 ms          | 166     | 7.7x    |
-|              | `mp.Queue`  | 46.31 ms         | 22      |         |
+| Payload size | Queue Type | Mean Time per Op | Ops/sec | Speedup |
+|--------------|------------|------------------|---------|---------|
+| 8 B          | `zeroq`    | 235.6 ns         | 4.25M   | 50x     |
+|              | `mp.Queue` | 11.84 μs         | 84.4K   |         |
+| 128 B        | `zeroq`    | 252.8 ns         | 3.96M   | 47x     |
+|              | `mp.Queue` | 11.86 μs         | 84.3K   |         |
+| 1 KiB        | `zeroq`    | 345.4 ns         | 2.90M   | 37x     |
+|              | `mp.Queue` | 12.89 μs         | 77.6K   |         |
+| 256 KiB      | `zeroq`    | 23.5 μs          | 42.5K   | 6x      |
+|              | `mp.Queue` | 142.0 μs         | 7.04K   |         |
+| 8 MiB        | `zeroq`    | 1.07 ms          | 936     | 13.7x   |
+|              | `mp.Queue` | 14.60 ms         | 68.5    |         |
+| 32 MiB       | `zeroq`    | 6.03 ms          | 166     | 7.7x    |
+|              | `mp.Queue` | 46.31 ms         | 22      |         |
 
-Fastqueue significantly accelerates interprocess communication, 
+zeroq significantly accelerates interprocess communication, 
 delivering up to 50× faster data transfer compared to `multiprocessing.Queue`. 
 This performance gain is achieved through shared memory and lock-free 
 synchronization, eliminating the overhead of serialization and dynamic memory 
@@ -54,7 +54,7 @@ allocation.
 
 ### Optimal Use Cases
 
-Fastqueue is particularly well-suited for tasks that require fast, 
+zeroq is particularly well-suited for tasks that require fast, 
 low-latency data exchange between processes, including:
 
 - **ML/AI Pipelines:** Efficient data transfer between processes for image and video processing, such as inference in computer vision models.
@@ -63,12 +63,12 @@ low-latency data exchange between processes, including:
 - **IoT and Embedded Systems:** Fast transmission of fixed-size data blocks between processes on a single device.
 
 By leveraging shared memory and avoiding unnecessary memory operations, 
-Fastqueue provides a significant advantage in applications that demand 
+zeroq provides a significant advantage in applications that demand 
 high-speed, low-latency communication.
 
 ## Usage
 
-Once installed, you can easily integrate fastqueue into your Python projects. Below is an example of video player.
+Once installed, you can easily integrate zeroq into your Python projects. Below is an example of video player.
 
 To run this example, install OpenCV and FFmpeg:
 
@@ -86,7 +86,7 @@ import subprocess
 import cv2
 import numpy as np
 
-from fastqueue import Empty, Full, Queue
+from zeroq import Empty, Full, Queue
 
 
 def producer(video_path: str) -> None:
@@ -152,6 +152,4 @@ if __name__ == '__main__':
 
 ## License
 
-fastqueue is distributed under the terms of the MIT License.
-
-
+zeroq is distributed under the terms of the MIT License.

@@ -2,7 +2,7 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from fastqueue import Queue
+from zeroq import Queue
 
 
 def powers_of_two(min_exp: int, max_exp: int):

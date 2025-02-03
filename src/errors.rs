@@ -4,8 +4,8 @@ use pyo3::prelude::*;
 
 // Define custom Python exceptions that map Rust errors to Python-friendly errors.
 // These exceptions allow the Rust library to raise meaningful errors in Python.
-pyo3::create_exception!(fastqueue, Empty, PyRuntimeError);
-pyo3::create_exception!(fastqueue, Full, PyRuntimeError);
+pyo3::create_exception!(zeroq, Empty, PyRuntimeError);
+pyo3::create_exception!(zeroq, Full, PyRuntimeError);
 
 /// Implements automatic conversion from `MpmcQueueError` to `PyErr`,
 /// allowing Rust queue errors to be seamlessly translated into Python exceptions.

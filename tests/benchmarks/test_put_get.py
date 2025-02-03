@@ -3,7 +3,7 @@ from typing import Callable, Protocol
 
 import pytest
 
-import fastqueue
+import zeroq
 
 
 class IQueue(Protocol):
@@ -25,7 +25,7 @@ def put_item_get_item(queue: IQueue, item: bytes) -> None:
 queue_factories = [
     pytest.param(lambda _: multiprocessing.Queue(), id='mp-queue'),
     pytest.param(
-        lambda element_size: fastqueue.Queue(
+        lambda element_size: zeroq.Queue(
             name='fast-queue-benchmarks',
             element_size=element_size,
             capacity=32,
