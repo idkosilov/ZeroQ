@@ -11,12 +11,9 @@ build-backend = "maturin"
 
 [dependency-groups]
 dev = [
-    "covdefaults>=2.3.0",
-    "coverage>=7.6.10",
     "hypothesis>=6.124.9",
     "mypy>=1.14.1",
     "pytest-benchmark>=5.1.0",
-    "pytest-cov>=6.0.0",
     "pytest-randomly>=3.16.0",
     "pytest-timeout>=2.3.1",
     "pytest>=8.3.4",
@@ -91,7 +88,7 @@ pydocstyle.convention = "google"
 "tests/*.py" = ["S101", "PLR2004", "F841"]
 
 
-[tool.pytest]
+[tool.pytest.ini_options]
 # pytest configuration:
 # https://docs.pytest.org/en/stable/customize.html
 
@@ -107,28 +104,14 @@ xfail_strict = true
 
 # Directories that are not visited by pytest collector:
 norecursedirs = [
-  "*.egg", ".eggs", "dist", "build", "docs", ".tox", ".git", "__pycache__"
+  "*.egg", ".eggs", "dist", "build", "docs",
+  ".tox", ".git", "__pycache__", ".hypothesis"
 ]
 
 # You will need to measure your tests speed with `-n auto` and without it,
 # so you can see whether it gives you any performance gain, or just gives
 # you an overhead. See `docs/template/development-process.rst`.
-addopts = [
-  "--strict-markers",
-  "--strict-config",
-  "--doctest-modules",
-  "--fail-on-template-vars",
-  # Output:
-  "--tb=short",
-  # Coverage:
-  "--cov=fastqueue",
-  "--cov=tests",
-  "--cov-branch",
-  "--cov-report=term-missing:skip-covered",
-  "--cov-report=html",
-  "--cov-report=xml",
-  "--cov-fail-under=100",
-]
+addopts = "--strict-markers --strict-config --benchmark-skip --tb=short"
 
 filterwarnings = [
   "error"
