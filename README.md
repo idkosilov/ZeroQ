@@ -57,8 +57,11 @@ Fastqueue is particularly well-suited for tasks that require fast,
 low-latency data exchange between processes, including:
 
 **ML/AI Pipelines:** Efficient data transfer between processes for image and video processing, such as inference in computer vision models.
+
 **Multimedia Processing:** Passing video frames or audio streams between processes in real-time applications.
+
 **Real-Time Systems:** Handling events, logs, telemetry, and signals where minimal latency and high throughput are critical.
+
 **IoT and Embedded Systems:** Fast transmission of fixed-size data blocks between processes on a single device.
 
 By leveraging shared memory and avoiding unnecessary memory operations, 
