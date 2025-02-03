@@ -199,7 +199,7 @@ jobs:
 
     steps:
       - name: Build Package
-        uses: ./.github/actions/build
+        uses: ./.github/actions/build-wheels
         with:
           target: ${{ matrix.target }}
           artifact_prefix: ${{ matrix.artifact_prefix }}
