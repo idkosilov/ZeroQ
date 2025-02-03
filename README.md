@@ -7,11 +7,12 @@ low latency and strict FIFO (First-In, First-Out) behavior even under heavy load
 
 ## Features
 
-**Lock-Free Concurrency:** Utilizes atomic operations for efficient, lock-free synchronization across threads and processes.
-**Shared Memory Communication:** Enables fast inter-process messaging without the overhead of kernel-based IPC.
-**Flexible API:** Supports both blocking (`put`/`get`) and non-blocking (`put_nowait`/`get_nowait`) operations.
-**Predictable FIFO Ordering:** Guarantees that elements are dequeued in the exact order they were enqueued.
-**Python Bindings:** Easily integrate with Python projects while leveraging Rust's performance and safety.
+- **Speed:** Up to 50× faster data transfer compared to `multiprocessing.Queue`.
+- **Lock-Free Concurrency:** Utilizes atomic operations for efficient, lock-free synchronization across threads and processes.
+- **Shared Memory Communication:** Enables fast inter-process messaging without the overhead of kernel-based IPC.
+- **Flexible API:** Supports both blocking (`put`/`get`) and non-blocking (`put_nowait`/`get_nowait`) operations.
+- **Predictable FIFO Ordering:** Guarantees that elements are dequeued in the exact order they were enqueued.
+- **Python Bindings:** Easily integrate with Python projects while leveraging Rust's performance and safety.
 
 ## Installation
 
@@ -56,13 +57,10 @@ allocation.
 Fastqueue is particularly well-suited for tasks that require fast, 
 low-latency data exchange between processes, including:
 
-**ML/AI Pipelines:** Efficient data transfer between processes for image and video processing, such as inference in computer vision models.
-
-**Multimedia Processing:** Passing video frames or audio streams between processes in real-time applications.
-
-**Real-Time Systems:** Handling events, logs, telemetry, and signals where minimal latency and high throughput are critical.
-
-**IoT and Embedded Systems:** Fast transmission of fixed-size data blocks between processes on a single device.
+- **ML/AI Pipelines:** Efficient data transfer between processes for image and video processing, such as inference in computer vision models.
+- **Multimedia Processing:** Passing video frames or audio streams between processes in real-time applications.
+- **Real-Time Systems:** Handling events, logs, telemetry, and signals where minimal latency and high throughput are critical.
+- **IoT and Embedded Systems:** Fast transmission of fixed-size data blocks between processes on a single device.
 
 By leveraging shared memory and avoiding unnecessary memory operations, 
 Fastqueue provides a significant advantage in applications that demand 
