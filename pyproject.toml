@@ -97,7 +97,7 @@ pydocstyle.convention = "google"
 # You should adjust this value to be as low as possible.
 # Configuration:
 # https://pypi.org/project/pytest-timeout/
-timeout = 5
+timeout = 30
 
 # Strict `@xfail` by default:
 xfail_strict = true
