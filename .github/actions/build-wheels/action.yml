@@ -1,12 +1,12 @@
-name: Build Wheels & sdist
-description: Build Python wheels and sdist
+name: Build Wheels
+description: Build Python wheels
 inputs:
   target:
     required: true
   artifact_prefix:
     required: true
   manylinux:
-    required: false
+    required: true
     default: ""
 runs:
   using: "composite"
