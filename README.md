@@ -7,7 +7,7 @@ low latency and strict FIFO (First-In, First-Out) behavior even under heavy load
 
 ## Features
 
-- **Speed:** Up to 50× faster data transfer compared to `multiprocessing.Queue`.
+- **Speed:** Up to 90× faster data transfer compared to `multiprocessing.Queue`.
 - **Lock-Free Concurrency:** Utilizes atomic operations for efficient, lock-free synchronization across threads and processes.
 - **Shared Memory Communication:** Enables fast inter-process messaging without the overhead of kernel-based IPC.
 - **Flexible API:** Supports both blocking (`put`/`get`) and non-blocking (`put_nowait`/`get_nowait`) operations.
