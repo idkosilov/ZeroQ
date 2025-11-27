@@ -257,8 +257,7 @@ impl<'a> MpmcQueueOnBuffer<'a> {
         let dst = unsafe { self.data_ptr().add(data_offset) };
         unsafe {
             std::ptr::copy_nonoverlapping(src.as_ptr(), dst, header.element_size);
-        }
-        unsafe {
+            std::sync::atomic::compiler_fence(Ordering::Release);
             self.cells_ptr()
                 .add(index)
                 .as_mut()
